@@ -19,19 +19,38 @@ typedef struct all
 	unsigned size, capacity;
 }all;
 
-void writeQuestionsToFile(char** questions, size_t* questions_num, const char* file_name)
+void encryptFile(FILE* file)
 {
-	FILE* file = fopen(file_name, "w");
-	if (file == NULL)
+	char character = "";
+
+	while (character != EOF)
 	{
-		printf("Error with opening the file!\n");
-		return;
+		character = fgetc(file);
+		if (character == 13)
+			continue;
+		if (character == -1)
+			break;
+		fseek(file, -1, SEEK_CUR);
+		fputc(character + 10, file);
+		fseek(file, 0, SEEK_CUR);
 	}
-	for (int i = 0; i < questions_num; i++)
+}
+
+void decryptFile(FILE* file)
+{
+	char character = "";
+
+	while (character != EOF)
 	{
-		fprintf(file, "%s\n", questions[i]);
+		character = fgetc(file);
+		if (character == 13)
+			continue;
+		if (character == -1)
+			break;
+		fseek(file, -1, SEEK_CUR);
+		fputc(character - 10, file);
+		fseek(file, 0, SEEK_CUR);
 	}
-	fclose(file);
 }
 
 all* read(char* filename)
@@ -48,7 +67,7 @@ all* read(char* filename)
 	int* diff = malloc(sizeof * diff);
 	char** ansers = malloc(sizeof * ansers * 4);
 	for (int i = 0; i < 4; i++)
-		ansers[i] = malloc(sizeof (char)*100);
+		ansers[i] = malloc(sizeof * ansers[i]);
 	int* cor = malloc(sizeof * cor);
 
 
@@ -60,7 +79,7 @@ all* read(char* filename)
 	for (; fscanf(file, "%[^\r]\r%d\r%[^\r]\r%[^\r]\r%[^\r]\r%[^\r]\r%d\r", title, diff, ansers[0], ansers[1], ansers[2], ansers[3], cor) == 7;)
 	{
 		question* _new = malloc(sizeof * _new);
-		_new->text = malloc(sizeof * _new->text * 50);
+		_new->text = malloc(sizeof(*_new->text) * 50);
 		strcpy(_new->text, title);
 		_new->difficulty = malloc(sizeof(int));
 		_new->difficulty = *diff;
@@ -79,8 +98,29 @@ all* read(char* filename)
 	return all_questions;
 }
 
+void writeQuestionsToFile(char** questions, size_t* questions_num, const char* file_name)
+{
+	FILE* file = fopen(file_name, "w");
+	if (file == NULL)
+	{
+		printf("Error with opening the file!\n");
+		return;
+	}
+	for (int i = 0; i < questions_num; i++)
+	{
+		fprintf(file, "%s\n", questions[i]);
+	}
+	fclose(file);
+}
+
 void addQuestion(question** questions, size_t questions_num)
 {
+	FILE* file = fopen("the_text.txt", "a");
+	if (file == NULL)
+	{
+		printf("Error opening file for writing!\n");
+		return;
+	}
 	questions_num++;
 	*questions = (question*)realloc(*questions, questions_num * sizeof(question));
 	if (*questions == NULL)
@@ -89,31 +129,58 @@ void addQuestion(question** questions, size_t questions_num)
 		questions_num--;
 		return;
 	}
-	getchar();
+	(*questions)[questions_num - 1].text = (char*)malloc(100 * sizeof(char));
+	if ((*questions)[questions_num - 1].text == NULL)
+	{
+		printf("Error with the memory allocation!\n");
+		questions_num--;
+		return;
+	}
+	for (int i = 0; i < 4; i++)
+	{
+		(*questions)[questions_num - 1].answers[i] = (char*)malloc(50 * sizeof(char));
+		if ((*questions)[questions_num - 1].answers[i] == NULL) {
+			printf("Error with memory allocation for answers!\n");
+			return;
+		}
+	}
 	printf("Write a question: ");
 	fgets((* questions)[questions_num - 1].text, sizeof((* questions)[questions_num - 1].text), stdin);
-
+	getchar();
+		
 	printf("Difficulty (from 1 to 10): ");
-	scanf(" %d", &(*questions)[questions_num - 1].difficulty);
+	scanf(" %*[^\n]\n %d", &(*questions)[questions_num - 1].difficulty);
 	getchar();
 
 	printf("Answer 1: ");
-	fgets(*questions[questions_num - 1]->answers[0], questions_num, stdin);
+	fgets((*questions)[questions_num - 1].answers[0], sizeof((*questions)[questions_num - 1].answers[0]), stdin);
+	getchar();
 
 	printf("Answer 2: ");
-	fgets(*questions[questions_num - 1]->answers[1], questions_num, stdin);
+	fgets((*questions)[questions_num - 1].answers[1], sizeof((*questions)[questions_num - 1].answers[1]), stdin);
+	getchar();
 
 	printf("Answer 3: ");
-	fgets(*questions[questions_num - 1]->answers[2], questions_num, stdin);
+	fgets((*questions)[questions_num - 1].answers[2], sizeof((*questions)[questions_num - 1].answers[2]), stdin);
+	getchar();
 
 	printf("Answer 4: ");
-	fgets(*questions[questions_num - 1]->answers[3], questions_num, stdin);
+	fgets((*questions)[questions_num - 1].answers[3], sizeof((*questions)[questions_num - 1].answers[3]), stdin);
+	getchar();
 
 	printf("The right answer (1-4): ");
 	scanf("%d", &(* questions)[questions_num - 1].answer);
 	getchar();
 
 	printf("The question is successfully added\n");
+	fputc('\n', file);
+	fprintf(file,"%s", (*questions)[questions_num - 1].text);
+	fprintf(file,"%d", (*questions)[questions_num - 1].difficulty);
+	for (int i = 0; i < 4; i++)
+	{
+		fprintf(file, "%s", (*questions)[questions_num - 1].answers[i]);
+	}
+	fprintf(file, "%d", (*questions)[questions_num - 1].answer);
 }
 
 void editQuestion(question* questions, size_t* questions_num)
@@ -144,10 +211,25 @@ void printMenu()
 	printf("4. Quit\n");
 }
 
+int inQuestions(question** questions, question *q, unsigned total) {
+	for (int i = 0; i < total; i++) {
+		if (questions[i] == q)
+			return 1;
+	}
+	return 0;
+}
+
 void generateRandomQuestions(question** questions, all* allQuestions)
 {
-	for (int i = 0; i < 10; i++)
-		questions[i] = allQuestions->arr[rand() % allQuestions->size];
+	for (int i = 0; i < 10; i++) {
+		question *q = allQuestions->arr[rand() % allQuestions->size];
+		if (inQuestions(questions, q, i))
+		{
+			i--;
+			continue;
+		}
+		questions[i] = q;
+	}
 }
 
 size_t getEasiestQuestion(question** questions, size_t size)
@@ -185,7 +267,7 @@ unsigned help(static char buffer, question* question)
 	case '1':
 	{
 		unsigned i = 0, j = 0;
-		while (i == j || i == question->answer || j == question->answer)
+		while ((i == question->answer-1 || j == question->answer-1) || i == j)
 		{
 			i = rand() % 4;
 			j = rand() % 4;
@@ -274,7 +356,7 @@ void game(static char buffer, all* allQuestions)
 	char* hints[3] = { "50/50", "Help from friend", "Help from audience" };
 	int i = -1;
 
-	while (true)
+	for (int j = 1; j < 10; )
 	{
 		if (i == -1)
 			i = getEasiestQuestion(questions, allQuestions->size);
@@ -283,23 +365,25 @@ void game(static char buffer, all* allQuestions)
 		printHints(hints);
 		char choice = 'A';
 		getchar();
-		scanf("%c", &choice);
+		scanf(" %c", &choice);
 		if ('A' <= choice && choice <= 'D')
 		{
 			if (choice - 'A'+1 != questions[i]->answer)
 			{
-				printf(" Wrong answer!");
+				printf(" Wrong answer!\n");
 				return;
 			}
-			printf(" Correct answer!");
-			questions[i] = NULL;  i = -1;
+			printf(" Correct answer!\n");
+			questions[i] = NULL;  i = -1; j++;
 			continue;
 		}
 
 		if ('1' <= choice && choice <= '3' && hints[choice - '1'] != "")
 		{
-			help(choice, questions[i]);
-			hints[buffer - '1'] = "";
+			unsigned res = help(choice, questions[i]);
+			if (res != 4) 
+				printf(" Answer: %c\n", res + 'A');
+			hints[choice - '1'] = "";
 			continue;
 		}
 		printf("Invalid input!");
@@ -352,49 +436,11 @@ void Menu(const char * file_name)
 	}
 }
 
-void encryptFile(FILE* file)
-{
-	int character = 0;
-
-	while (!feof(file))
-	{
-		character = fgetc(file);
-		if (character == -1)
-			break;
-		fseek(file, -1, SEEK_CUR);
-		fputc(character + 10, file);
-		fseek(file, 0, SEEK_CUR);
-	}
-}
-
-void decryptFile(FILE* file)
-{
-	int character = 0;
-
-	while (!feof(file))
-	{
-		character = fgetc(file);
-		if (character == -1)
-			break;
-		fseek(file, -1, SEEK_CUR);
-		fputc(character - 10, file);
-		fseek(file, 0, SEEK_CUR);
-	}
-}
-
 void main()
 {
 	FILE* file;
 
 	file = fopen("the_text.txt", "r+");
-
-	srand(time(NULL));
-	Menu("the_text.txt");
-	//encryptFile(file);
-	//fclose(file);
-
-	//file = fopen("the_text.txt", "r+");
-	//decryptFile(file);
-
+	decryptFile(file);
 	fclose(file);
 }
