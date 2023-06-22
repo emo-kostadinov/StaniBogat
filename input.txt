@@ -1,0 +1,79 @@
+Which planet is known as the "Red Planet"?
+5
+Venus
+Mars
+Jupiter
+Saturn
+2
+
+Who painted the famous artwork "The Mona Lisa"?
+6
+Pablo Picasso
+Leonardo da Vinci
+Vincent van Gogh
+Michelangelo
+2
+
+What is the largest ocean in the world?
+4
+Atlantic Ocean
+Indian Ocean
+Pacific Ocean
+Arctic Ocean
+3
+
+Which country is famous for the Great Barrier Reef?
+7
+Australia
+Brazil
+Canada
+Japan
+1
+
+Who is the author of the Harry Potter book series?
+3
+J.R.R. Tolkien
+J.K. Rowling
+George R.R. Martin
+Stephen King
+2
+
+Which continent is home to the Sahara Desert?
+2
+Africa
+Asia
+South America
+Australia
+1
+
+What is the chemical symbol for gold?
+8
+Ag
+Au
+Fe
+Pb
+1
+
+Which planet is the largest in our solar system?
+1
+Jupiter
+Mars
+Saturn
+Neptune
+1
+
+Who painted the ceiling of the Sistine Chapel?
+10
+Vincent van Gogh
+Leonardo da Vinci
+Michelangelo
+Pablo Picasso
+3
+
+What is the capital city of Canada?
+9
+Ottawa
+Toronto
+Vancouver
+Montreal
+1
